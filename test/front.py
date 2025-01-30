@@ -1,250 +1,431 @@
+# import streamlit as st
+# import requests
+
+# # Base URL of the FastAPI backend
+# BASE_URL = "http://0.0.0.0:8000"
+
+# st.set_page_config(page_title="Gestion des utilisateurs d'un forum", layout="wide")
+
+# # Navigation Sidebar
+# st.sidebar.title("Navigation")
+# menu = st.sidebar.radio("Go to", ["Home", "Create Post", "Manage Categories", "Users"])
+
+# # Utility function to fetch data from the backend
+# def fetch_data(endpoint):
+#     try:
+#         response = requests.get(f"{BASE_URL}{endpoint}")
+#         response.raise_for_status()
+#         return response.json()
+#     except requests.exceptions.RequestException as e:
+#         st.error(f"Error fetching data: {e}")
+#         return []
+
+# # Utility function to post data to the backend
+# def post_data(endpoint, payload):
+#     try:
+#         response = requests.post(f"{BASE_URL}{endpoint}", json=payload)
+#         response.raise_for_status()
+#         return response.json()
+#     except requests.exceptions.RequestException as e:
+#         st.error(f"Error posting data: {e}")
+#         return None
+# # Home Page
+# if menu == "Home":
+#     st.title("Welcome to the Forum!")
+
+#     # Fetch all posts
+#     posts = fetch_data("/posts/")
+
+#     # Fetch available users for comment submission
+#     users = fetch_data("/utilisateurs/")
+#     user_options = {user['id']: user['nom'] for user in users}  # Creating a dictionary for easy access
+#     user_dict = {user['id']: user['nom'] for user in users}  # A mapping from user_id to user name
+    
+#     if posts:
+#         for post in posts:
+#             with st.expander(post['titre']):
+#                 # Title of the post
+#                 st.subheader(post['titre'])
+#                 # Content of the post
+#                 st.write(post['contenu'])
+                
+#                 # Display post's meta information with the user's name instead of user_id
+#                 post_user_name = user_dict.get(post['utilisateur_id'], "Unknown User")
+#                 post_category = post['categorie_id']  # Assuming you have category information in posts
+#                 st.caption(f"poste par {post_user_name} dans le Categorie {post_category}")
+                
+#                 # Add a delete post button
+#                 delete_post_button = st.button("Delete Post", key=f"delete_{post['id']}")
+                
+#                 if delete_post_button:
+#                     response = requests.delete(f"{BASE_URL}/posts/{post['id']}")
+                    
+#                     if response.status_code == 200:
+#                         st.success("Post deleted successfully!")
+#                         # Refresh the post list after deletion
+#                         posts = fetch_data("/posts/")
+#                     else:
+#                         st.error("Failed to delete the post. Make sure the ID is correct.")
+                
+#                 # Add a new comment section
+#                 selected_user_id = st.selectbox(
+#                     "Select User to Submit Comment", 
+#                     options=list(user_options.keys()), 
+#                     format_func=lambda x: user_options[x], 
+#                     key=f"select_user_{post['id']}"  # Unique key for each selectbox
+#                 )
+#                 new_comment = st.text_input(f"Add a comment for post {post['id']}", key=f"comment_{post['id']}")
+                
+#                 if st.button("Submit Comment", key=f"submit_{post['id']}"):
+#                     if new_comment:
+#                         payload = {"contenu": new_comment, "utilisateur_id": selected_user_id, "post_id": post['id']}
+#                         post_data("/commentaires/", payload)
+#                         st.success("Comment added successfully!")
+#                     else:
+#                         st.error("Comment cannot be empty.")
+
+#             # Fetch and display comments for the post outside of the post's expander
+#             comments = fetch_data(f"/commentaires/?post_id={post['id']}")
+#             with st.expander(f"View Comments for Post {post['id']}"):
+#                 if comments:
+#                     st.write("### Comments")
+#                     for comment in comments:
+#                         user_name = user_dict.get(comment['utilisateur_id'], "Unknown")
+#                         # Displaying the comment with user name before and after the comment text
+#                         st.markdown(f"**{user_name}**: {comment['contenu']} (**{user_name}**)")  # This is the new format
+#                 else:
+#                     st.write("No comments yet. Be the first to comment!")
+#     else:
+#         st.write("No posts available yet. Please check back later.")
+
+# # Create Post Page
+# elif menu == "Create Post":
+#     st.title("Create a New Post")
+#     title = st.text_input("Post Title")
+#     content = st.text_area("Post Content")
+    
+#     # Fetch available users
+#     users = fetch_data("/utilisateurs/")
+#     user_options = {user['id']: user['nom'] for user in users}  # Creating a dictionary for easy access
+    
+#     # Select user from the available list
+#     user_id = st.selectbox("Select User", options=list(user_options.keys()), format_func=lambda x: user_options[x])
+    
+#     # Fetch available categories
+#     categories = fetch_data("/categories/")
+#     category_options = {category['id']: category['nom'] for category in categories}  # Creating a dictionary for easy access
+    
+#     # Select category from the available list
+#     category_id = st.selectbox("Select Category", options=list(category_options.keys()), format_func=lambda x: category_options[x])
+
+#     if st.button("Submit Post"):
+#         if title and content:
+#             payload = {
+#                 "titre": title,
+#                 "contenu": content,
+#                 "utilisateur_id": user_id,
+#                 "categorie_id": category_id
+#             }
+#             post_data("/posts/", payload)
+#             st.success("Post created successfully!")
+#         else:
+#             st.error("Title and Content cannot be empty.")
+
+
+
+# # Manage Categories Page
+# elif menu == "Manage Categories":
+#     st.title("Categories Management")
+    
+#     # Fetch and display existing categories with their IDs
+#     categories = fetch_data("/categories/")
+
+#     st.write("### Existing Categories")
+#     for category in categories:
+#         st.write(f"**ID:** {category['id']} - **Category Name:** {category['nom']}")
+
+#     # Section to create a new category
+#     st.subheader("Add a New Category")
+#     new_category = st.text_input("New Category Name")
+
+#     if st.button("Add Category"):
+#         if new_category:
+#             payload = {"nom": new_category}
+#             post_data("/categories/", payload)
+#             st.success("Category added successfully!")
+#             # Optionally refresh the category list
+#             categories = fetch_data("/categories/")
+#         else:
+#             st.error("Category name cannot be empty.")
+
+#     # Section to delete a category by ID
+#     st.subheader("Delete Category")
+#     category_id_to_delete = st.number_input("Enter Category ID to Delete", min_value=1, step=1)
+
+#     if st.button("Delete Category"):
+#         if category_id_to_delete:
+#             response = requests.delete(f"{BASE_URL}/categories/{category_id_to_delete}")
+            
+#             if response.status_code == 200:
+#                 st.success("Category deleted successfully!")
+#                 # Optionally refresh the category list
+#                 categories = fetch_data("/categories/")
+#             else:
+#                 st.error("Failed to delete category. Make sure the ID is correct.")
+#         else:
+#             st.error("Please enter a valid category ID.")
+
+
+
+
+# # Users Page
+# elif menu == "Users":
+#     st.title("User Management")
+    
+#     # Fetch and display existing users with their IDs
+#     users = fetch_data("/utilisateurs/")
+
+#     st.write("### Existing Users")
+#     for user in users:
+#         st.write(f"**ID:** {user['id']} - **Name:** {user['nom']} - **Email:** {user['email']}")
+
+#     # Section to create a new user
+#     st.subheader("Create New User")
+#     new_user_name = st.text_input("New User Name")
+#     new_user_email = st.text_input("New User Email")
+
+#     if st.button("Add User"):
+#         if new_user_name and new_user_email:
+#             payload = {"nom": new_user_name, "email": new_user_email}
+#             post_data("/utilisateurs/", payload)
+#             st.success("User added successfully!")
+#             # Optionally refresh the user list
+#             users = fetch_data("/utilisateurs/")
+#         else:
+#             st.error("Name and Email cannot be empty.")
+
+#     # Section to delete a user by ID
+#     st.subheader("Delete User")
+#     user_id_to_delete = st.number_input("Enter User ID to Delete", min_value=1, step=1)
+
+#     if st.button("Delete User"):
+#         if user_id_to_delete:
+#             response = requests.delete(f"{BASE_URL}/utilisateurs/{user_id_to_delete}")
+            
+#             if response.status_code == 200:
+#                 st.success("User deleted successfully!")
+#                 # Optionally refresh the user list
+#                 users = fetch_data("/utilisateurs/")
+#             else:
+#                 st.error("Failed to delete user. Make sure the ID is correct.")
+#         else:
+#             st.error("Please enter a valid user ID.")
+
+
+
+# # Clear Database Button
+# if st.button("Clear All Data"):
+#     response = requests.delete(f"{BASE_URL}/clear_all")
+    
+#     if response.status_code == 200:
+#         st.success("All data has been cleared from the database!")
+#     else:
+#         st.error("Failed to clear data.")
+
+
+
+
+
 import streamlit as st
 import requests
 
-# API URL for FastAPI
-API_URL = "http://0.0.0.0:8000"
+BASE_URL = "http://0.0.0.0:8000"
 
-# Function to handle API requests with error handling
-def api_request(method, endpoint, **kwargs):
+st.set_page_config(page_title="Gestion des utilisateurs d'un forum", layout="wide")
+
+st.sidebar.title("Navigation")
+menu = st.sidebar.radio("Aller à", ["Accueil", "Créer un Post", "Gérer les Catégories", "Utilisateurs"])
+
+def recuperer_donnees(endpoint):
     try:
-        url = f"{API_URL}{endpoint}"
-        response = requests.request(method, url, **kwargs)
+        response = requests.get(f"{BASE_URL}{endpoint}")
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.HTTPError as err:
-        st.error(f"HTTP error occurred: {err}")
-    except requests.exceptions.RequestException as err:
-        st.error(f"Error occurred: {err}")
-    return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de la récupération des données : {e}")
+        return []
 
-# USER CRUD FUNCTIONS
-def get_utilisateurs():
-    return api_request("GET", "/utilisateurs/")
+def envoyer_donnees(endpoint, payload):
+    try:
+        response = requests.post(f"{BASE_URL}{endpoint}", json=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de l'envoi des données : {e}")
+        return None
 
-def create_utilisateur(nom, email):
-    return api_request("POST", "/utilisateurs/", json={"nom": nom, "email": email})
+if menu == "Accueil":
+    st.title("Bienvenue sur le Forum !")
 
-def update_utilisateur(utilisateur_id, nom, email):
-    return api_request("PUT", f"/utilisateurs/{utilisateur_id}", json={"nom": nom, "email": email})
+    posts = recuperer_donnees("/posts/")
+    utilisateurs = recuperer_donnees("/utilisateurs/")
+    options_utilisateur = {utilisateur['id']: utilisateur['nom'] for utilisateur in utilisateurs}
+    dictionnaire_utilisateurs = {utilisateur['id']: utilisateur['nom'] for utilisateur in utilisateurs}
+    
+    if posts:
+        for post in posts:
+            with st.expander(post['titre']):
+                st.subheader(post['titre'])
+                st.write(post['contenu'])
+                
+                nom_utilisateur_post = dictionnaire_utilisateurs.get(post['utilisateur_id'], "Utilisateur inconnu")
+                categorie_post = post['categorie_id']
+                st.caption(f"Posté par {nom_utilisateur_post}")
+                
+                bouton_supprimer_post = st.button("Supprimer le Post", key=f"delete_{post['id']}")
+                
+                if bouton_supprimer_post:
+                    response = requests.delete(f"{BASE_URL}/posts/{post['id']}")
+                    
+                    if response.status_code == 200:
+                        st.success("Post supprimé avec succès !")
+                        posts = recuperer_donnees("/posts/")
+                    else:
+                        st.error("Échec de la suppression du post. Assurez-vous que l'ID est correct.")
+                
+                id_utilisateur_select = st.selectbox(
+                    "Sélectionner un utilisateur pour soumettre un commentaire", 
+                    options=list(options_utilisateur.keys()), 
+                    format_func=lambda x: options_utilisateur[x], 
+                    key=f"select_user_{post['id']}"
+                )
+                nouveau_commentaire = st.text_input(f"Ajouter un commentaire pour le post {post['id']}", key=f"comment_{post['id']}")
+                
+                if st.button("Soumettre le commentaire", key=f"submit_{post['id']}"):
+                    if nouveau_commentaire:
+                        payload = {"contenu": nouveau_commentaire, "utilisateur_id": id_utilisateur_select, "post_id": post['id']}
+                        envoyer_donnees("/commentaires/", payload)
+                        st.success("Commentaire ajouté avec succès !")
+                    else:
+                        st.error("Le commentaire ne peut pas être vide.")
 
-def delete_utilisateur(utilisateur_id):
-    return api_request("DELETE", f"/utilisateurs/{utilisateur_id}")
-
-# CATEGORY CRUD FUNCTIONS
-def get_categories():
-    return api_request("GET", "/categories/")
-
-def create_categorie(nom):
-    return api_request("POST", "/categories/", json={"nom": nom})
-
-def update_categorie(categorie_id, nom):
-    return api_request("PUT", f"/categories/{categorie_id}", json={"nom": nom})
-
-def delete_categorie(categorie_id):
-    return api_request("DELETE", f"/categories/{categorie_id}")
-
-# POST CRUD FUNCTIONS
-def get_posts():
-    return api_request("GET", "/posts/")
-
-def create_post(titre, contenu, utilisateur_id, categorie_id):
-    return api_request("POST", "/posts/", json={"titre": titre, "contenu": contenu, "utilisateur_id": utilisateur_id, "categorie_id": categorie_id})
-
-def update_post(post_id, titre, contenu, utilisateur_id, categorie_id):
-    return api_request("PUT", f"/posts/{post_id}", json={"titre": titre, "contenu": contenu, "utilisateur_id": utilisateur_id, "categorie_id": categorie_id})
-
-def delete_post(post_id):
-    return api_request("DELETE", f"/posts/{post_id}")
-
-# COMMENT CRUD FUNCTIONS
-def get_commentaires():
-    return api_request("GET", "/commentaires/")
-
-def create_commentaire(contenu, utilisateur_id, post_id):
-    return api_request("POST", "/commentaires/", json={"contenu": contenu, "utilisateur_id": utilisateur_id, "post_id": post_id})
-
-def update_commentaire(commentaire_id, contenu, utilisateur_id, post_id):
-    return api_request("PUT", f"/commentaires/{commentaire_id}", json={"contenu": contenu, "utilisateur_id": utilisateur_id, "post_id": post_id})
-
-def delete_commentaire(commentaire_id):
-    return api_request("DELETE", f"/commentaires/{commentaire_id}")
-
-# Streamlit Layout
-
-# Header
-st.title("Forum Management System")
-# --- USERS MANAGEMENT ---
-st.header("Manage Users")
-
-# List Users
-st.subheader("List Users")
-utilisateurs = get_utilisateurs()
-if utilisateurs:
-    for utilisateur in utilisateurs:
-        st.write(f"ID: {utilisateur['id']}, Nom: {utilisateur['nom']}, Email: {utilisateur['email']}")
-
-# Create User
-st.subheader("Create User")
-nom = st.text_input("Name")
-email = st.text_input("Email")
-if st.button("Create User"):
-    result = create_utilisateur(nom, email)
-    if result:
-        st.success(f"User created: {result['nom']} ({result['email']})")
+            commentaires = recuperer_donnees(f"/commentaires/?post_id={post['id']}")
+            with st.expander(f"Voir les commentaires pour le post {post['id']}"):
+                if commentaires:
+                    st.write("### Commentaires")
+                    for commentaire in commentaires:
+                        nom_utilisateur = dictionnaire_utilisateurs.get(commentaire['utilisateur_id'], "Inconnu")
+                        st.markdown(f"**{nom_utilisateur}**: {commentaire['contenu']} ")  
+                else:
+                    st.write("Aucun commentaire pour l'instant. Soyez le premier à commenter !")
     else:
-        st.error("Error creating user.")
+        st.write("Aucun post disponible pour le moment. Veuillez revenir plus tard.")
 
-# Update User
-st.subheader("Update User")
-utilisateur_id_update = st.number_input("User ID", min_value=1, key="update_user_id")
-nom_update = st.text_input("New Name")
-email_update = st.text_input("New Email")
-if st.button("Update User"):
-    result = update_utilisateur(utilisateur_id_update, nom_update, email_update)
-    if result:
-        st.success(f"User updated: {result['nom']} ({result['email']})")
-    else:
-        st.error("Error updating user.")
+elif menu == "Créer un Post":
+    st.title("Créer un nouveau post")
+    titre = st.text_input("Titre du post")
+    contenu = st.text_area("Contenu du post")
+    
+    utilisateurs = recuperer_donnees("/utilisateurs/")
+    options_utilisateur = {utilisateur['id']: utilisateur['nom'] for utilisateur in utilisateurs}
+    
+    id_utilisateur = st.selectbox("Sélectionner un utilisateur", options=list(options_utilisateur.keys()), format_func=lambda x: options_utilisateur[x])
+    
+    categories = recuperer_donnees("/categories/")
+    options_categorie = {categorie['id']: categorie['nom'] for categorie in categories}
+    
+    id_categorie = st.selectbox("Sélectionner une catégorie", options=list(options_categorie.keys()), format_func=lambda x: options_categorie[x])
 
-# Delete User
-st.subheader("Delete User")
-utilisateur_id_delete = st.number_input("User ID to Delete", min_value=1, key="delete_user_id")
-if st.button("Delete User"):
-    result = delete_utilisateur(utilisateur_id_delete)
-    if result:
-        st.success(f"User deleted successfully!")
-    else:
-        st.error("Error deleting user.")
+    if st.button("Soumettre le post"):
+        if titre and contenu:
+            payload = {
+                "titre": titre,
+                "contenu": contenu,
+                "utilisateur_id": id_utilisateur,
+                "categorie_id": id_categorie
+            }
+            envoyer_donnees("/posts/", payload)
+            st.success("Post créé avec succès !")
+        else:
+            st.error("Le titre et le contenu ne peuvent pas être vides.")
 
-# --- CATEGORIES MANAGEMENT ---
-st.header("Manage Categories")
+elif menu == "Gérer les Catégories":
+    st.title("Gestion des Catégories")
+    
+    categories = recuperer_donnees("/categories/")
 
-# List Categories
-st.subheader("List Categories")
-categories = get_categories()
-if categories:
+    st.write("### Catégories existantes")
     for categorie in categories:
-        st.write(f"ID: {categorie['id']}, Name: {categorie['nom']}")
+        st.write(f"**ID :** {categorie['id']} - **Nom de la catégorie :** {categorie['nom']}")
 
-# Create Category
-st.subheader("Create Category")
-categorie_nom = st.text_input("Category Name")
-if st.button("Create Category"):
-    result = create_categorie(categorie_nom)
-    if result:
-        st.success(f"Category created: {result['nom']}")
+    st.subheader("Ajouter une nouvelle catégorie")
+    nouvelle_categorie = st.text_input("Nom de la nouvelle catégorie")
+
+    if st.button("Ajouter la catégorie"):
+        if nouvelle_categorie:
+            payload = {"nom": nouvelle_categorie}
+            envoyer_donnees("/categories/", payload)
+            st.success("Catégorie ajoutée avec succès !")
+            categories = recuperer_donnees("/categories/")
+        else:
+            st.error("Le nom de la catégorie ne peut pas être vide.")
+
+    st.subheader("Supprimer une catégorie")
+    id_categorie_a_supprimer = st.number_input("Entrez l'ID de la catégorie à supprimer", min_value=1, step=1)
+
+    if st.button("Supprimer la catégorie"):
+        if id_categorie_a_supprimer:
+            response = requests.delete(f"{BASE_URL}/categories/{id_categorie_a_supprimer}")
+            
+            if response.status_code == 200:
+                st.success("Catégorie supprimée avec succès !")
+                categories = recuperer_donnees("/categories/")
+            else:
+                st.error("Échec de la suppression de la catégorie. Assurez-vous que l'ID est correct.")
+        else:
+            st.error("Veuillez entrer un ID de catégorie valide.")
+
+elif menu == "Utilisateurs":
+    st.title("Gestion des Utilisateurs")
+    
+    utilisateurs = recuperer_donnees("/utilisateurs/")
+
+    st.write("### Utilisateurs existants")
+    for utilisateur in utilisateurs:
+        st.write(f"**ID :** {utilisateur['id']} - **Nom :** {utilisateur['nom']} - **Email :** {utilisateur['email']}")
+
+    st.subheader("Créer un nouvel utilisateur")
+    nouveau_nom_utilisateur = st.text_input("Nom du nouvel utilisateur")
+    nouvel_email_utilisateur = st.text_input("Email du nouvel utilisateur")
+
+    if st.button("Ajouter un utilisateur"):
+        if nouveau_nom_utilisateur and nouvel_email_utilisateur:
+            payload = {"nom": nouveau_nom_utilisateur, "email": nouvel_email_utilisateur}
+            envoyer_donnees("/utilisateurs/", payload)
+            st.success("Utilisateur ajouté avec succès !")
+            utilisateurs = recuperer_donnees("/utilisateurs/")
+        else:
+            st.error("Le nom et l'email ne peuvent pas être vides.")
+
+    st.subheader("Supprimer un utilisateur")
+    id_utilisateur_a_supprimer = st.number_input("Entrez l'ID de l'utilisateur à supprimer", min_value=1, step=1)
+
+    if st.button("Supprimer l'utilisateur"):
+        if id_utilisateur_a_supprimer:
+            response = requests.delete(f"{BASE_URL}/utilisateurs/{id_utilisateur_a_supprimer}")
+            
+            if response.status_code == 200:
+                st.success("Utilisateur supprimé avec succès !")
+                utilisateurs = recuperer_donnees("/utilisateurs/")
+            else:
+                st.error("Échec de la suppression de l'utilisateur. Assurez-vous que l'ID est correct.")
+        else:
+            st.error("Veuillez entrer un ID d'utilisateur valide.")
+
+if st.button("Effacer toutes les données"):
+    response = requests.delete(f"{BASE_URL}/clear_all")
+    
+    if response.status_code == 200:
+        st.success("Toutes les données ont été effacées de la base de données !")
     else:
-        st.error("Error creating category.")
-
-# Update Category
-st.subheader("Update Category")
-categorie_id_update = st.number_input("Category ID", min_value=1, key="update_category_id")
-categorie_nom_update = st.text_input("New Category Name")
-if st.button("Update Category"):
-    result = update_categorie(categorie_id_update, categorie_nom_update)
-    if result:
-        st.success(f"Category updated: {result['nom']}")
-    else:
-        st.error("Error updating category.")
-
-# Delete Category
-st.subheader("Delete Category")
-categorie_id_delete = st.number_input("Category ID to Delete", min_value=1, key="delete_category_id")
-if st.button("Delete Category"):
-    result = delete_categorie(categorie_id_delete)
-    if result:
-        st.success(f"Category deleted successfully!")
-    else:
-        st.error("Error deleting category.")
-
-# --- POSTS MANAGEMENT ---
-st.header("Manage Posts")
-
-# List Posts
-st.subheader("List Posts")
-posts = get_posts()
-if posts:
-    for post in posts:
-        st.write(f"ID: {post['id']}, Title: {post['titre']}, Content: {post['contenu']}")
-
-# Create Post
-st.subheader("Create Post")
-post_titre = st.text_input("Post Title")
-post_contenu = st.text_area("Post Content")
-post_utilisateur_id = st.number_input("User ID", min_value=1, key="create_post_user_id")
-post_categorie_id = st.number_input("Category ID", min_value=1, key="create_post_category_id")
-if st.button("Create Post"):
-    result = create_post(post_titre, post_contenu, post_utilisateur_id, post_categorie_id)
-    if result:
-        st.success(f"Post created: {result['titre']}")
-    else:
-        st.error("Error creating post.")
-
-# Update Post
-st.subheader("Update Post")
-post_id_update = st.number_input("Post ID", min_value=1, key="update_post_id")
-post_titre_update = st.text_input("New Post Title")
-post_contenu_update = st.text_area("New Post Content")
-post_utilisateur_id_update = st.number_input("User ID", min_value=1, key="update_post_user_id")
-post_categorie_id_update = st.number_input("Category ID", min_value=1, key="update_post_category_id")
-if st.button("Update Post"):
-    result = update_post(post_id_update, post_titre_update, post_contenu_update, post_utilisateur_id_update, post_categorie_id_update)
-    if result:
-        st.success(f"Post updated: {result['titre']}")
-    else:
-        st.error("Error updating post.")
-
-# Delete Post
-st.subheader("Delete Post")
-post_id_delete = st.number_input("Post ID to Delete", min_value=1, key="delete_post_id")
-if st.button("Delete Post"):
-    result = delete_post(post_id_delete)
-    if result:
-        st.success(f"Post deleted successfully!")
-    else:
-        st.error("Error deleting post.")
-
-# --- COMMENTS MANAGEMENT ---
-st.header("Manage Comments")
-
-# List Comments
-st.subheader("List Comments")
-commentaires = get_commentaires()
-if commentaires:
-    for commentaire in commentaires:
-        st.write(f"ID: {commentaire['id']}, Content: {commentaire['contenu']}")
-
-# Create Comment
-st.subheader("Create Comment")
-commentaire_contenu = st.text_area("Comment Content")
-commentaire_utilisateur_id = st.number_input("User ID", min_value=1, key="create_comment_user_id")
-commentaire_post_id = st.number_input("Post ID", min_value=1, key="create_comment_post_id")
-if st.button("Create Comment"):
-    result = create_commentaire(commentaire_contenu, commentaire_utilisateur_id, commentaire_post_id)
-    if result:
-        st.success(f"Comment created: {result['contenu']}")
-    else:
-        st.error("Error creating comment.")
-
-# Update Comment
-st.subheader("Update Comment")
-commentaire_id_update = st.number_input("Comment ID", min_value=1, key="update_comment_id")
-commentaire_contenu_update = st.text_area("New Comment Content")
-commentaire_utilisateur_id_update = st.number_input("User ID", min_value=1, key="update_comment_user_id")
-commentaire_post_id_update = st.number_input("Post ID", min_value=1, key="update_comment_post_id")
-if st.button("Update Comment"):
-    result = update_commentaire(commentaire_id_update, commentaire_contenu_update, commentaire_utilisateur_id_update, commentaire_post_id_update)
-    if result:
-        st.success(f"Comment updated: {result['contenu']}")
-    else:
-        st.error("Error updating comment.")
-
-# Delete Comment
-st.subheader("Delete Comment")
-commentaire_id_delete = st.number_input("Comment ID to Delete", min_value=1, key="delete_comment_id")
-if st.button("Delete Comment"):
-    result = delete_commentaire(commentaire_id_delete)
-    if result:
-        st.success(f"Comment deleted successfully!")
-    else:
-        st.error("Error deleting comment.")
+        st.error("Échec de l'effacement des données.")

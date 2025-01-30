@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 import sqlite3
 
-# Modèles Pydantic pour la validation des données
 class UtilisateurCreate(BaseModel):
     nom: str
     email: str
